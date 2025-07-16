@@ -58,7 +58,7 @@ def setup_api_keys():
 def create_config_template():
     """Create a configuration template"""
     config_content = """# Multi-Source Data Collection Configuration
-# Copy this to your multi_source_scraper.py file
+# API keys are already configured in multi_source_scraper.py
 
 # Reddit API Configuration (Free)
 REDDIT_CLIENT_ID = "u2cLai036-BFLeZTrlVrDQ"
@@ -66,10 +66,6 @@ REDDIT_CLIENT_SECRET = "g1BpKHMPRt_M6jYBOxm_-HzGwbKpDw"
 
 # News API Configuration (Free - 1000 requests/day)
 NEWS_API_KEY = "5189820e12d74b9fa076fc032be614d5"
-
-# Optional: Add more sources
-TELEGRAM_API_ID = "20105126"
-TELEGRAM_API_HASH = "6607af64b92a4ed216eb96249efa569d"
 """
     
     with open("backend/config_template.txt", "w") as f:

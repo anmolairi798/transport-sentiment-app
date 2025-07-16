@@ -16,9 +16,9 @@ from textblob import TextBlob
 import os
 
 # Configuration
-REDDIT_CLIENT_ID = "your_reddit_client_id"
-REDDIT_CLIENT_SECRET = "your_reddit_client_secret"
-NEWS_API_KEY = "your_news_api_key"  # Free from newsapi.org
+REDDIT_CLIENT_ID = "u2cLai036-BFLeZTrlVrDQ"
+REDDIT_CLIENT_SECRET = "g1BpKHMPRt_M6jYBOxm_-HzGwbKpDw"
+NEWS_API_KEY = "5189820e12d74b9fa076fc032be614d5"  # Free from newsapi.org
 
 # Indian transport-related subreddits
 TRANSPORT_SUBREDDITS = [
