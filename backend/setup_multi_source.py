@@ -61,15 +61,15 @@ def create_config_template():
 # Copy this to your multi_source_scraper.py file
 
 # Reddit API Configuration (Free)
-REDDIT_CLIENT_ID = "your_reddit_client_id_here"
-REDDIT_CLIENT_SECRET = "your_reddit_client_secret_here"
+REDDIT_CLIENT_ID = "u2cLai036-BFLeZTrlVrDQ"
+REDDIT_CLIENT_SECRET = "g1BpKHMPRt_M6jYBOxm_-HzGwbKpDw"
 
 # News API Configuration (Free - 1000 requests/day)
-NEWS_API_KEY = "your_news_api_key_here"
+NEWS_API_KEY = "5189820e12d74b9fa076fc032be614d5"
 
 # Optional: Add more sources
-TELEGRAM_API_ID = "your_telegram_api_id"
-TELEGRAM_API_HASH = "your_telegram_api_hash"
+TELEGRAM_API_ID = "20105126"
+TELEGRAM_API_HASH = "6607af64b92a4ed216eb96249efa569d"
 """
     
     with open("backend/config_template.txt", "w") as f:
