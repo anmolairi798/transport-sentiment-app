@@ -115,7 +115,7 @@ export const IndianMapVisualization: React.FC<IndianMapVisualizationProps> = ({
 
             const fillColor = stateData 
               ? getSentimentColor(stateData.sentimentScore)
-              : '#f3f4f6';
+              : '#3B82F6'; // Blue color for states with no data
 
             return (
               <g key={index}>
@@ -124,7 +124,7 @@ export const IndianMapVisualization: React.FC<IndianMapVisualizationProps> = ({
                   fill={fillColor}
                   stroke="#ffffff"
                   strokeWidth="1"
-                  opacity="0.8"
+                  opacity={stateData ? "0.8" : "0.6"}
                   className="hover:opacity-100 transition-opacity cursor-pointer"
                 />
               </g>
@@ -232,6 +232,10 @@ export const IndianMapVisualization: React.FC<IndianMapVisualizationProps> = ({
           <div className="flex items-center space-x-2">
             <div className="w-4 h-4 rounded-full bg-red-500"></div>
             <span className="text-sm">Negative Sentiment</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded-full bg-blue-500"></div>
+            <span className="text-sm">No Data</span>
           </div>
         </div>
         <div className="text-sm text-gray-500">
