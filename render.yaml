@@ -19,9 +19,25 @@ services:
         value: g1BpKHMPRt_M6jYBOxm_-HzGwbKpDw
       - key: NEWS_API_KEY
         value: 5189820e12d74b9fa076fc032be614d5
+      - key: MYSQL_HOST
+        fromDatabase:
+          name: transport-sentiment-mysql
+          property: host
+      - key: MYSQL_DATABASE
+        fromDatabase:
+          name: transport-sentiment-mysql
+          property: database
+      - key: MYSQL_USER
+        fromDatabase:
+          name: transport-sentiment-mysql
+          property: user
+      - key: MYSQL_PASSWORD
+        fromDatabase:
+          name: transport-sentiment-mysql
+          property: password
       - key: DATABASE_URL
         fromDatabase:
-          name: transport-sentiment-db
+          name: transport-sentiment-mysql
           property: connectionString
 
   # Frontend Service
@@ -45,7 +61,7 @@ services:
     buildCommand: |
       pip install --upgrade pip
       pip install -r backend/requirements.txt
-    startCommand: python backend/multi_source_scraper.py
+    startCommand: python backend/multi_source_scraper.py && python backend/analyse_sentiment.py
     schedule: "0 */2 * * *"  # Run every 2 hours
     envVars:
       - key: REDDIT_CLIENT_ID
@@ -54,13 +70,26 @@ services:
         value: g1BpKHMPRt_M6jYBOxm_-HzGwbKpDw
       - key: NEWS_API_KEY
         value: 5189820e12d74b9fa076fc032be614d5
-      - key: DATABASE_URL
+      - key: MYSQL_HOST
         fromDatabase:
-          name: transport-sentiment-db
-          property: connectionString
+          name: transport-sentiment-mysql
+          property: host
+      - key: MYSQL_DATABASE
+        fromDatabase:
+          name: transport-sentiment-mysql
+          property: database
+      - key: MYSQL_USER
+        fromDatabase:
+          name: transport-sentiment-mysql
+          property: user
+      - key: MYSQL_PASSWORD
+        fromDatabase:
+          name: transport-sentiment-mysql
+          property: password
 
-# Database
+# MySQL Database
 databases:
-  - name: transport-sentiment-db
+  - name: transport-sentiment-mysql
     databaseName: transport_sentiment
     user: transport_user
+    plan: starter  # Free tier

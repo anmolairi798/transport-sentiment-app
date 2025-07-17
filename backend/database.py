@@ -1,6 +1,6 @@
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import mysql.connector
+from mysql.connector import Error
 import logging
 
 # Configure logging
@@ -13,19 +13,39 @@ class Database:
         self.connect()
     
     def connect(self):
-        """Connect to PostgreSQL database"""
+        """Connect to MySQL database"""
         try:
-            database_url = os.getenv('DATABASE_URL')
-            if not database_url:
+            # Try environment variables first (for Render deployment)
+            if os.getenv('MYSQL_HOST'):
+                config = {
+                    'host': os.getenv('MYSQL_HOST'),
+                    'database': os.getenv('MYSQL_DATABASE'),
+                    'user': os.getenv('MYSQL_USER'),
+                    'password': os.getenv('MYSQL_PASSWORD'),
+                    'port': int(os.getenv('MYSQL_PORT', 3306)),
+                    'charset': 'utf8mb4',
+                    'collation': 'utf8mb4_unicode_ci',
+                    'autocommit': True
+                }
+            else:
                 # Fallback for local development
-                database_url = "postgresql://localhost/transport_sentiment"
+                config = {
+                    'host': 'localhost',
+                    'database': 'transport_sentiment_app',
+                    'user': 'root',
+                    'password': 'gadheullu12',
+                    'port': 3306,
+                    'charset': 'utf8mb4',
+                    'collation': 'utf8mb4_unicode_ci',
+                    'autocommit': True
+                }
             
-            self.connection = psycopg2.connect(database_url)
-            logger.info("✅ Connected to PostgreSQL database")
+            self.connection = mysql.connector.connect(**config)
+            logger.info("✅ Connected to MySQL database")
             self.create_tables()
             
-        except Exception as e:
-            logger.error(f"❌ Database connection failed: {e}")
+        except Error as e:
+            logger.error(f"❌ MySQL connection failed: {e}")
             self.connection = None
     
     def create_tables(self):
@@ -47,8 +67,12 @@ class Database:
                     source VARCHAR(50) DEFAULT 'unknown',
                     transport_type VARCHAR(20) DEFAULT 'bus',
                     sentiment_score DECIMAL(3,2) DEFAULT 0.0,
-                    confidence DECIMAL(3,2) DEFAULT 0.5
-                )
+                    confidence DECIMAL(3,2) DEFAULT 0.5,
+                    INDEX idx_created_at (created_at),
+                    INDEX idx_sentiment (sentiment),
+                    INDEX idx_region (region),
+                    INDEX idx_transport_type (transport_type)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
             
             # Create states summary table
@@ -60,16 +84,19 @@ class Database:
                     negative_count INTEGER DEFAULT 0,
                     neutral_count INTEGER DEFAULT 0,
                     avg_sentiment DECIMAL(3,2) DEFAULT 0.0,
-                    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
+                    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_total_messages (total_messages),
+                    INDEX idx_avg_sentiment (avg_sentiment)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
             
             self.connection.commit()
-            logger.info("✅ Database tables created/verified")
+            logger.info("✅ MySQL tables created/verified")
             
-        except Exception as e:
+        except Error as e:
             logger.error(f"❌ Error creating tables: {e}")
-            self.connection.rollback()
+            if self.connection:
+                self.connection.rollback()
     
     def insert_tweet(self, tweet_data):
         """Insert a tweet into the database"""
@@ -79,10 +106,9 @@ class Database:
         try:
             cursor = self.connection.cursor()
             cursor.execute("""
-                INSERT INTO tweet_sentiment 
+                INSERT IGNORE INTO tweet_sentiment 
                 (id, text, created_at, sentiment, region, source, transport_type, sentiment_score, confidence)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (id) DO NOTHING
             """, (
                 tweet_data['id'],
                 tweet_data['text'],
@@ -98,9 +124,10 @@ class Database:
             self.connection.commit()
             return True
             
-        except Exception as e:
+        except Error as e:
             logger.error(f"❌ Error inserting tweet: {e}")
-            self.connection.rollback()
+            if self.connection:
+                self.connection.rollback()
             return False
     
     def get_recent_tweets(self, limit=100):
@@ -109,7 +136,7 @@ class Database:
             return []
         
         try:
-            cursor = self.connection.cursor(cursor_factory=RealDictCursor)
+            cursor = self.connection.cursor(dictionary=True)
             cursor.execute("""
                 SELECT * FROM tweet_sentiment 
                 ORDER BY created_at DESC 
@@ -118,7 +145,7 @@ class Database:
             
             return cursor.fetchall()
             
-        except Exception as e:
+        except Error as e:
             logger.error(f"❌ Error fetching tweets: {e}")
             return []
     
@@ -128,10 +155,10 @@ class Database:
             return []
         
         try:
-            cursor = self.connection.cursor(cursor_factory=RealDictCursor)
+            cursor = self.connection.cursor(dictionary=True)
             cursor.execute("""
                 SELECT 
-                    region as state,
+                    region,
                     COUNT(*) as total_messages,
                     SUM(CASE WHEN sentiment = 'positive' THEN 1 ELSE 0 END) as positive_count,
                     SUM(CASE WHEN sentiment = 'negative' THEN 1 ELSE 0 END) as negative_count,
@@ -149,15 +176,15 @@ class Database:
             
             return cursor.fetchall()
             
-        except Exception as e:
+        except Error as e:
             logger.error(f"❌ Error fetching state summary: {e}")
             return []
     
     def close(self):
         """Close database connection"""
-        if self.connection:
+        if self.connection and self.connection.is_connected():
             self.connection.close()
-            logger.info("Database connection closed")
+            logger.info("MySQL connection closed")
 
 # Global database instance
 db = Database()
