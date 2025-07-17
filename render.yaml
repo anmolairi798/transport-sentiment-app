@@ -1,0 +1,66 @@
+services:
+  # Backend API Service
+  - type: web
+    name: transport-sentiment-api
+    env: python
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r backend/requirements.txt
+      python -c "import nltk; nltk.download('punkt'); nltk.download('vader_lexicon')"
+    startCommand: python backend/api.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16
+      - key: PORT
+        value: 5000
+      - key: REDDIT_CLIENT_ID
+        value: u2cLai036-BFLeZTrlVrDQ
+      - key: REDDIT_CLIENT_SECRET
+        value: g1BpKHMPRt_M6jYBOxm_-HzGwbKpDw
+      - key: NEWS_API_KEY
+        value: 5189820e12d74b9fa076fc032be614d5
+      - key: DATABASE_URL
+        fromDatabase:
+          name: transport-sentiment-db
+          property: connectionString
+
+  # Frontend Service
+  - type: web
+    name: transport-sentiment-frontend
+    env: node
+    buildCommand: |
+      npm install
+      npm run build
+    startCommand: npm run preview
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: VITE_API_URL
+        value: https://transport-sentiment-api.onrender.com
+
+  # Background Job for Data Collection
+  - type: cron
+    name: transport-data-collector
+    env: python
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r backend/requirements.txt
+    startCommand: python backend/multi_source_scraper.py
+    schedule: "0 */2 * * *"  # Run every 2 hours
+    envVars:
+      - key: REDDIT_CLIENT_ID
+        value: u2cLai036-BFLeZTrlVrDQ
+      - key: REDDIT_CLIENT_SECRET
+        value: g1BpKHMPRt_M6jYBOxm_-HzGwbKpDw
+      - key: NEWS_API_KEY
+        value: 5189820e12d74b9fa076fc032be614d5
+      - key: DATABASE_URL
+        fromDatabase:
+          name: transport-sentiment-db
+          property: connectionString
+
+# Database
+databases:
+  - name: transport-sentiment-db
+    databaseName: transport_sentiment
+    user: transport_user
